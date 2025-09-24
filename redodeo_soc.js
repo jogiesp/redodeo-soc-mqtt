@@ -4,21 +4,30 @@ const interval = 30 * 1000;
 // Datenpunkt für SOC
 const socDP = '0_userdata.0.solar.redodeo_soc';
 
-// Angepasste Spannung-SOC Kurve (Redodo 12V LiFePO4)
-const socCurve = [
+// Dynamische Spannung-SOC Kurve (Redodo 12V LiFePO4)
+// Korrigierte Werte basierend auf aktuellen Messungen
+let socCurve = [
     { voltage: 14.1, soc: 100 },
     { voltage: 13.8, soc: 95 },
     { voltage: 13.6, soc: 90 },
-    { voltage: 13.4, soc: 80 },
-    { voltage: 13.2, soc: 30 }, // Anpassung: bei 13.2V ca. 30% Handy App
+    { voltage: 13.41, soc: 33 }, // korrekt gemessener Wert
+    { voltage: 13.2, soc: 30 },  // angepasst
     { voltage: 13.0, soc: 20 },
     { voltage: 12.8, soc: 15 },
     { voltage: 12.6, soc: 10 },
     { voltage: 12.4, soc: 5 },
     { voltage: 12.2, soc: 2 },
-    { voltage: 12.0, soc: 1 },
     { voltage: 11.8, soc: 0 }
 ];
+
+// Funktion zum Hinzufügen eines neuen Kurvenpunkts, automatisch sortiert
+function addSOCPoint(voltage, soc) {
+    const exists = socCurve.find(p => p.voltage === voltage);
+    if (!exists) {
+        socCurve.push({ voltage, soc });
+        socCurve.sort((a, b) => b.voltage - a.voltage); // absteigend sortieren
+    }
+}
 
 // Interpolationsfunktion
 function interpolateSOC(voltage) {
@@ -26,12 +35,10 @@ function interpolateSOC(voltage) {
         const high = socCurve[i];
         const low = socCurve[i + 1];
         if (voltage >= low.voltage && voltage <= high.voltage) {
-            // Lineare Interpolation
             const soc = low.soc + (high.soc - low.soc) * (voltage - low.voltage) / (high.voltage - low.voltage);
-            return Math.round(soc); // auf ganze Zahl runden
+            return Math.round(soc);
         }
     }
-    // außerhalb des Bereichs
     if (voltage > socCurve[0].voltage) return 100;
     if (voltage < socCurve[socCurve.length - 1].voltage) return 0;
     return null;
@@ -45,23 +52,4 @@ if (!existsState(socDP)) {
 // Hauptfunktion
 function updateSOC() {
     const voltageState = getState('0_userdata.0.solar.redodeo_single_volt');
-    if (!voltageState || voltageState.val === null || voltageState.val === undefined) {
-        return; // keine Log-Ausgabe
-    }
-
-    const voltage = parseFloat(voltageState.val);
-    if (isNaN(voltage)) {
-        return; // keine Log-Ausgabe
-    }
-
-    const soc = interpolateSOC(voltage);
-    if (soc !== null) {
-        setState(socDP, soc);
-    }
-}
-
-// Initialer Aufruf
-updateSOC();
-
-// Timer setzen, alle 30 Sekunden erneut ausführen
-setInterval(updateSOC, interval);
+    if (!voltageState || voltageState.val === null || voltageState.val === und

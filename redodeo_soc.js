@@ -4,21 +4,21 @@ const interval = 30 * 1000;
 // Datenpunkt für SOC
 const socDP = '0_userdata.0.solar.redodeo_soc';
 
-// Angepasste Spannung-SOC Kurve (Redodo 12V LiFePO4)
+// Angepasste Spannung-SOC Kurve (Redodo 12V LiFePO4, Ruhespannung)
 const socCurve = [
-    { voltage: 14.1, soc: 100 },
-    { voltage: 13.8, soc: 95 },
-    { voltage: 13.6, soc: 90 },
-    { voltage: 13.5, soc: 36 }, // Neu: 13.5V = 36%
-    { voltage: 13.4, soc: 80 },
-    { voltage: 13.2, soc: 30 },
-    { voltage: 13.0, soc: 20 },
-    { voltage: 12.8, soc: 15 },
-    { voltage: 12.6, soc: 10 },
-    { voltage: 12.4, soc: 5 },
-    { voltage: 12.2, soc: 2 },
-    { voltage: 12.0, soc: 1 },
-    { voltage: 11.8, soc: 0 }
+    { voltage: 14.4, soc: 100 },
+    { voltage: 13.8, soc: 100 },
+    { voltage: 13.6, soc: 99 },
+    { voltage: 13.4, soc: 90 },
+    { voltage: 13.28, soc: 80 },
+    { voltage: 13.2, soc: 70 },
+    { voltage: 13.1, soc: 60 },
+    { voltage: 13.0, soc: 50 },
+    { voltage: 12.9, soc: 40 },
+    { voltage: 12.8, soc: 30 },
+    { voltage: 12.5, soc: 20 },
+    { voltage: 12.0, soc: 10 },
+    { voltage: 10.0, soc: 0 }
 ];
 
 // Interpolationsfunktion

@@ -1,5 +1,5 @@
-// Intervall in Millisekunden (30 Sekunden)
-const interval = 30 * 1000;
+// Intervall in Millisekunden (5 Minuten)
+const interval = 5 * 60 * 1000;
 
 // Datenpunkt für SOC
 const socDP = '0_userdata.0.solar.redodeo_soc';
@@ -56,5 +56,5 @@ function updateSOC() {
 // Initialer Aufruf
 updateSOC();
 
-// Timer setzen, alle 30 Sekunden erneut ausführen
+// Timer setzen, alle 5 Minuten erneut ausführen
 setInterval(updateSOC, interval);

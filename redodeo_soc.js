@@ -10,7 +10,7 @@ const socCurve = [
     { voltage: 13.8, soc: 95 },
     { voltage: 13.6, soc: 90 },
     { voltage: 13.4, soc: 80 },
-    { voltage: 13.2, soc: 30 }, // Anpassung: bei 13.2V ca. 30%
+    { voltage: 13.2, soc: 30 }, // Anpassung: bei 13.2V ca. 30% Handy App
     { voltage: 13.0, soc: 20 },
     { voltage: 12.8, soc: 15 },
     { voltage: 12.6, soc: 10 },

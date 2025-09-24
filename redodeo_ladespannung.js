@@ -1,62 +1,82 @@
-// Intervall in Millisekunden (30 Sekunden)
-const interval = 30 * 1000;
+// --- Konfiguration ---
+// Datenpunkt für die Batteriespannung
+const voltageDP = '0_userdata.0.solar.redodeo_single_volt';
 
-// Datenpunkt für SOC
-const socDP = '0_userdata.0.solar.redodeo_soc';
-
-// Angepasste Spannung-SOC Kurve für Ladespannung (Redodo 12V LiFePO4)
-// Wichtig: Diese Werte sind nur ein Beispiel und müssen für deine spezifische
-// Batterie und Laderkalibriert werden!
+// LiFePO4 Spannung-SOC Kurve für den Ladevorgang
+// Diese Werte sind optimierte Schätzungen für eine 12V-Batterie (4S).
+// Die Ladespannung steigt schnell an und verweilt lange im oberen Bereich.
 const socCurve = [
-    { voltage: 14.4, soc: 100 },
+    { voltage: 14.6, soc: 100 },
+    { voltage: 14.4, soc: 98 },
     { voltage: 14.2, soc: 95 },
     { voltage: 14.0, soc: 90 },
-    { voltage: 13.8, soc: 80 },
-    { voltage: 13.6, soc: 70 },
+    { voltage: 13.8, soc: 85 },
+    { voltage: 13.6, soc: 75 },
     { voltage: 13.4, soc: 60 },
-    { voltage: 13.2, soc: 50 },
-    { voltage: 13.0, soc: 40 },
-    { voltage: 12.8, soc: 30 },
-    { voltage: 12.6, soc: 20 },
-    { voltage: 12.4, soc: 10 },
-    { voltage: 12.0, soc: 5 },
+    { voltage: 13.2, soc: 40 },
+    { voltage: 13.0, soc: 20 },
+    { voltage: 12.8, soc: 10 },
+    { voltage: 12.5, soc: 5 },
     { voltage: 10.0, soc: 0 }
 ];
 
-// Interpolationsfunktion
+// --- Funktionen ---
+
+/**
+ * Führt eine lineare Interpolation basierend auf der Spannung-SOC-Kurve durch.
+ * @param {number} voltage Die gemessene Batteriespannung.
+ * @returns {number|null} Der berechnete SOC in Prozent oder null bei ungültiger Spannung.
+ */
 function interpolateSOC(voltage) {
+    // Ungültige Eingabe prüfen
+    if (typeof voltage !== 'number' || isNaN(voltage)) {
+        log(`Fehler: Ungültiger Spannungswert: '${voltage}'`, 'error');
+        return null;
+    }
+
+    // Behandlung von Grenzfällen
+    if (voltage >= socCurve[0].voltage) {
+        return 100;
+    }
+    if (voltage <= socCurve[socCurve.length - 1].voltage) {
+        return 0;
+    }
+
+    // Lineare Interpolation zwischen den Datenpunkten
     for (let i = 0; i < socCurve.length - 1; i++) {
-        const high = socCurve[i];
-        const low = socCurve[i + 1];
-        if (voltage >= low.voltage && voltage <= high.voltage) {
-            const soc = low.soc + (high.soc - low.soc) * (voltage - low.voltage) / (high.voltage - low.voltage);
+        const point1 = socCurve[i];
+        const point2 = socCurve[i + 1];
+
+        // Finde das passende Intervall
+        if (voltage <= point1.voltage && voltage >= point2.voltage) {
+            const rangeVoltage = point1.voltage - point2.voltage;
+            const rangeSOC = point1.soc - point2.soc;
+
+            // Vermeide Division durch Null
+            if (rangeVoltage === 0) {
+                return point1.soc;
+            }
+
+            const soc = point2.soc + (rangeSOC * (voltage - point2.voltage) / rangeVoltage);
             return Math.round(soc);
         }
     }
-    if (voltage > socCurve[0].voltage) return 100;
-    if (voltage < socCurve[socCurve.length - 1].voltage) return 0;
+
     return null;
 }
 
-// Prüfen und anlegen des SOC-Datenpunkts, falls nicht vorhanden
-if (!existsState(socDP)) {
-    createState(socDP, 0, { type: 'number', name: 'SOC Redodo Batterie', unit: '%', read: true, write: true });
-}
+// --- Hauptlogik (event-basiert) ---
+// Lauscht auf Änderungen des Spannungsdatenpunkts
+on({ id: voltageDP, change: 'any' }, (obj) => {
+    // Ruft den Wert aus dem geänderten Zustand ab
+    const voltage = parseFloat(obj.state.val);
+    
+    // Berechnet den SOC im RAM
+    const newSOC = interpolateSOC(voltage);
 
-// Hauptfunktion
-function updateSOC() {
-    const voltageState = getState('0_userdata.0.solar.redodeo_single_volt');
-    if (!voltageState || voltageState.val === null || voltageState.val === undefined) return;
-
-    const voltage = parseFloat(voltageState.val);
-    if (isNaN(voltage)) return;
-
-    const soc = interpolateSOC(voltage);
-    if (soc !== null) setState(socDP, soc);
-}
-
-// Initialer Aufruf
-updateSOC();
-
-// Timer setzen, alle 30 Sekunden erneut ausführen
-setInterval(updateSOC, interval);
+    // Wenn der SOC-Wert gültig ist, gib ihn in der Konsole aus.
+    // Es werden keine Datenpunkte geschrieben.
+    if (newSOC !== null) {
+        log(`Neuer SOC (im RAM): ${newSOC}% bei ${voltage.toFixed(2)}V`);
+    }
+});

@@ -5,13 +5,12 @@ const interval = 30 * 1000;
 const socDP = '0_userdata.0.solar.redodeo_soc';
 
 // Dynamische Spannung-SOC Kurve (Redodo 12V LiFePO4)
-// Korrigierte Werte basierend auf aktuellen Messungen
 let socCurve = [
     { voltage: 14.1, soc: 100 },
     { voltage: 13.8, soc: 95 },
     { voltage: 13.6, soc: 90 },
-    { voltage: 13.41, soc: 33 }, // korrekt gemessener Wert
-    { voltage: 13.2, soc: 30 },  // angepasst
+    { voltage: 13.41, soc: 33 },
+    { voltage: 13.2, soc: 30 },
     { voltage: 13.0, soc: 20 },
     { voltage: 12.8, soc: 15 },
     { voltage: 12.6, soc: 10 },
@@ -22,6 +21,7 @@ let socCurve = [
 
 // Funktion zum Hinzufügen eines neuen Kurvenpunkts, automatisch sortiert
 function addSOCPoint(voltage, soc) {
+    if (typeof voltage !== 'number' || typeof soc !== 'number') return;
     const exists = socCurve.find(p => p.voltage === voltage);
     if (!exists) {
         socCurve.push({ voltage, soc });
@@ -31,6 +31,7 @@ function addSOCPoint(voltage, soc) {
 
 // Interpolationsfunktion
 function interpolateSOC(voltage) {
+    if (typeof voltage !== 'number') return null;
     for (let i = 0; i < socCurve.length - 1; i++) {
         const high = socCurve[i];
         const low = socCurve[i + 1];
@@ -52,4 +53,15 @@ if (!existsState(socDP)) {
 // Hauptfunktion
 function updateSOC() {
     const voltageState = getState('0_userdata.0.solar.redodeo_single_volt');
-    if (!voltageState || voltageState.val === null || voltageState.val === und
+    if (!voltageState || voltageState.val === null || voltageState.val === undefined) return;
+    const voltage = parseFloat(voltageState.val);
+    if (isNaN(voltage)) return;
+    const soc = interpolateSOC(voltage);
+    if (soc !== null) setState(socDP, soc);
+}
+
+// Initialer Aufruf
+updateSOC();
+
+// Timer setzen, alle 30 Sekunden erneut ausführen
+setInterval(updateSOC, interval);

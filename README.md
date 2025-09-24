@@ -1,24 +1,20 @@
-# Redodo SOC Script
+# Redodeo SOC Script
 
-Dieses Projekt enthält ein JavaScript für **ioBroker**, das den Ladezustand (SOC) einer **Redodo 12V LiFePO4 Batterie** anhand der Batteriespannung berechnet.
+Dieses Projekt berechnet den State of Charge (SOC) einer Redodeo 12V LiFePO4 Batterie basierend auf der Spannung, die über den Datenpunkt `0_userdata.0.solar.redodeo_single_volt` ausgelesen wird. Der berechnete SOC wird dann in `0_userdata.0.solar.redodeo_soc` gespeichert.
+
+## Status
+
+**Alpha-Phase:** Dieses Projekt befindet sich noch in der frühen Entwicklungsphase. Fehler und unerwartetes Verhalten sind möglich.
 
 ## Funktionsweise
 
-* Das Skript liest regelmäßig (alle 30 Sekunden) die Batteriespannung aus.
-* Mithilfe einer definierten Spannung-SOC-Kurve wird der **State of Charge (SOC)** interpoliert.
-* Der berechnete SOC wird in einem eigenen Datenpunkt gespeichert.
+Das Script führt alle 30 Sekunden folgende Schritte aus:
 
-## Datenpunkte
+1. Liest die aktuelle Batteriespannung aus.
+2. Interpoliert den SOC anhand einer vordefinierten Spannung-SOC-Kurve.
+3. Speichert den SOC-Wert im entsprechenden Datenpunkt.
 
-* **Eingang**: `0_userdata.0.solar.redodeo_single_volt`
-  Erwartet die aktuelle Batteriespannung (z. B. vom Wechselrichter oder Batteriemonitor).
-
-* **Ausgang**: `0_userdata.0.solar.redodeo_soc`
-  Enthält den berechneten SOC in Prozent.
-
-## Anpassungen
-
-Die Spannung-SOC-Kurve ist auf Redodo LiFePO4-Batterien abgestimmt. Beispielwerte:
+### Spannung-SOC-Kurve (Beispiel)
 
 | Spannung (V) | SOC (%) |
 | ------------ | ------- |
@@ -35,20 +31,30 @@ Die Spannung-SOC-Kurve ist auf Redodo LiFePO4-Batterien abgestimmt. Beispielwert
 | 12.0         | 1       |
 | 11.8         | 0       |
 
-Die Kurve kann bei Bedarf an die eigenen Messwerte oder Herstellerangaben angepasst werden.
+### Grafische Darstellung der Ladecharakteristik
+
+```text
+100% ┤■■■■■■■■
+ 90% ┤■■■■■■
+ 80% ┤■■■■
+ 70% ┤■■■
+ 60% ┤■■
+ 50% ┤■
+ 40% ┤
+ 30% ┤
+ 20% ┤
+ 10% ┤
+  0% ┤
+    11.8 12.0 12.2 12.4 12.6 12.8 13.0 13.2 13.4 13.6 13.8 14.1 V
+```
 
 ## Installation
 
-1. Öffne im ioBroker-Admin die Skripte-Verwaltung.
-2. Erstelle ein neues **JavaScript**-Skript.
-3. Kopiere den Inhalt der Datei `Redodo_SOC.js` hinein.
-4. Passe ggf. die Datenpunkt-Namen an deine Umgebung an.
+1. Script in ioBroker als JavaScript anlegen.
+2. Datenpunkte `0_userdata.0.solar.redodeo_single_volt` und `0_userdata.0.solar.redodeo_soc` sicherstellen.
+3. Script starten.
 
 ## Hinweise
 
-* Die Berechnung erfolgt **nur anhand der Spannung**, was bei LiFePO4-Batterien nicht immer 100% genau ist. Für präzisere Ergebnisse empfiehlt sich ein Batteriemonitor mit Shunt.
-* Das Skript interpoliert Werte linear zwischen den definierten Stützpunkten.
-
-## Lizenz
-
-Dieses Projekt steht unter der **MIT-Lizenz**.
+* Die Spannung-SOC-Kurve basiert auf Erfahrungswerten und sollte ggf. an die eigenen Batteriedaten angepasst werden.
+* In der Alpha-Phase kann es zu Abweichungen zwischen angezeigtem SOC und tatsächlicher Batteriekapazität kommen.

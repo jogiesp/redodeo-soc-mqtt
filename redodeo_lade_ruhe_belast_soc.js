@@ -43,7 +43,7 @@ const chargingVoltageCurve = [
 const dischargingVoltageCurve = [
     { voltage: 14.0, soc: 100 }, // Angepasst auf 14V
     { voltage: 13.6, soc: 90 }, // Neuer Zwischenschritt
-    { voltage: 13.4, soc: 65 }, // Wert basierend auf Ihrem Feedback
+    { voltage: 13.4, soc: 65 }, // Wert basierend auf Feedback
     { voltage: 13.2, soc: 40 },
     { voltage: 12.8, soc: 20 },
     { voltage: 12.5, soc: 10 },

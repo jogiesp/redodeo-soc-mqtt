@@ -39,12 +39,11 @@ const chargingVoltageCurve = [
     { voltage: 12.0, soc: 0 }
 ];
 
-// SOC-Kurve während der Entladung (negative Ströme) - Angepasst für LiFePO4
+// SOC-Kurve während der Entladung (negative Ströme) - Angepasst für LiFePO4, basierend auf Nutzerfeedback
 const dischargingVoltageCurve = [
-    { voltage: 13.4, soc: 100 },
-    { voltage: 13.2, soc: 80 },
-    { voltage: 13.1, soc: 60 },
-    { voltage: 13.0, soc: 40 },
+    { voltage: 13.6, soc: 100 },
+    { voltage: 13.4, soc: 65 }, // Wert basierend auf Ihrem Feedback
+    { voltage: 13.2, soc: 40 },
     { voltage: 12.8, soc: 20 },
     { voltage: 12.5, soc: 10 },
     { voltage: 12.0, soc: 0 }

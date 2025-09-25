@@ -10,24 +10,20 @@ const lastUpdateDP = '0_userdata.0.solar.redodeo_last_update';
 // Batteriekonfiguration
 const batteryCapacityAh = 100; // Batterie Kapazität in Ah (anpassen!)
 
-// SOC-Kurve für Ruhespannung (kein Strom)
+// SOC-Kurve für Ruhespannung (kein Strom) - Angepasst für LiFePO4
 const restingVoltageCurve = [
     { voltage: 14.4, soc: 100 },
-    { voltage: 13.8, soc: 100 },
-    { voltage: 13.6, soc: 99 },
+    { voltage: 13.5, soc: 99 },
     { voltage: 13.4, soc: 90 },
-    { voltage: 13.28, soc: 80 },
-    { voltage: 13.2, soc: 70 },
-    { voltage: 13.1, soc: 60 },
-    { voltage: 13.0, soc: 50 },
-    { voltage: 12.9, soc: 40 },
-    { voltage: 12.8, soc: 30 },
-    { voltage: 12.5, soc: 20 },
-    { voltage: 12.0, soc: 10 },
-    { voltage: 10.0, soc: 0 }
+    { voltage: 13.3, soc: 70 },
+    { voltage: 13.2, soc: 50 },
+    { voltage: 13.1, soc: 30 },
+    { voltage: 13.0, soc: 20 },
+    { voltage: 12.8, soc: 10 },
+    { voltage: 12.0, soc: 0 }
 ];
 
-// SOC-Kurve während des Ladens (positive Ströme)
+// SOC-Kurve während des Ladens (positive Ströme) - Angepasst für LiFePO4
 const chargingVoltageCurve = [
     { voltage: 14.6, soc: 100 },
     { voltage: 14.4, soc: 95 },
@@ -43,20 +39,15 @@ const chargingVoltageCurve = [
     { voltage: 12.0, soc: 0 }
 ];
 
-// SOC-Kurve während der Entladung (negative Ströme)
+// SOC-Kurve während der Entladung (negative Ströme) - Angepasst für LiFePO4
 const dischargingVoltageCurve = [
-    { voltage: 13.6, soc: 100 },
-    { voltage: 13.4, soc: 95 },
-    { voltage: 13.2, soc: 85 },
-    { voltage: 13.1, soc: 75 },
-    { voltage: 13.0, soc: 65 },
-    { voltage: 12.9, soc: 55 },
-    { voltage: 12.8, soc: 45 },
-    { voltage: 12.7, soc: 35 },
-    { voltage: 12.6, soc: 25 },
-    { voltage: 12.4, soc: 15 },
-    { voltage: 12.2, soc: 5 },
-    { voltage: 11.8, soc: 0 }
+    { voltage: 13.4, soc: 100 },
+    { voltage: 13.2, soc: 80 },
+    { voltage: 13.1, soc: 60 },
+    { voltage: 13.0, soc: 40 },
+    { voltage: 12.8, soc: 20 },
+    { voltage: 12.5, soc: 10 },
+    { voltage: 12.0, soc: 0 }
 ];
 
 // Interpolationsfunktion

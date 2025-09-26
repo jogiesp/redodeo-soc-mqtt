@@ -1,5 +1,5 @@
-// Intervall in Millisekunden (1 Minute für genauere Überwachung)
-// const interval = 1 * 60 * 1000;
+// Intervall in Millisekunden (1 Minute)
+const interval = 1 * 60 * 1000;
 
 // Datenpunkte
 const socDP = '0_userdata.0.solar.redodeo_soc';
@@ -25,10 +25,11 @@ const restingVoltageCurve = [
 
 // SOC-Kurve während des Ladens (positive Ströme) - Angepasst für LiFePO4
 const chargingVoltageCurve = [
-    { voltage: 14.6, soc: 100 },
-    { voltage: 14.4, soc: 95 },
+    { voltage: 14.6, soc: 110 },
+    { voltage: 14.4, soc: 100 },
     { voltage: 14.2, soc: 85 },
-    { voltage: 14.0, soc: 75 },
+    { voltage: 14.0, soc: 88 },
+    { voltage: 13.9, soc: 80 },
     { voltage: 13.8, soc: 65 },
     { voltage: 13.6, soc: 55 },
     { voltage: 13.4, soc: 45 },
@@ -39,11 +40,11 @@ const chargingVoltageCurve = [
     { voltage: 12.0, soc: 0 }
 ];
 
-// SOC-Kurve während der Entladung (negative Ströme) - Angepasst für LiFePO4, basierend auf Nutzerfeedback
+// SOC-Kurve während der Entladung (negative Ströme) - Angepasst für LiFePO4
 const dischargingVoltageCurve = [
-    { voltage: 14.0, soc: 100 }, // Angepasst auf 14V
-    { voltage: 13.6, soc: 90 }, // Neuer Zwischenschritt
-    { voltage: 13.4, soc: 65 }, // Wert basierend auf Feedback
+    { voltage: 14.0, soc: 100 },
+    { voltage: 13.6, soc: 90 },
+    { voltage: 13.4, soc: 65 },
     { voltage: 13.2, soc: 40 },
     { voltage: 12.8, soc: 20 },
     { voltage: 12.5, soc: 10 },
@@ -67,8 +68,7 @@ function interpolateSOC(voltage, curve) {
 
 // Coulomb Counting (Ampere-Stunden Integration)
 function updateSOCWithCoulombCounting(currentSOC, current, deltaTimeHours) {
-    // Ignoriere sehr kleine Ströme, die Rauschen sein könnten
-    if (Math.abs(current) < 0.1) return currentSOC;
+    if (Math.abs(current) < 0.1) return currentSOC; // Rauschen ignorieren
     
     const deltaAh = current * deltaTimeHours;
     const deltaSOC = (deltaAh / batteryCapacityAh) * 100;
@@ -76,140 +76,86 @@ function updateSOCWithCoulombCounting(currentSOC, current, deltaTimeHours) {
     return Math.max(0, Math.min(100, currentSOC + deltaSOC));
 }
 
-// Bestimme Betriebszustand basierend auf Strom
+// Bestimme Betriebszustand
 function getBatteryState(current) {
     if (current > 0.1) {
-        return 'LADEN'; // Positiver Strom = Laden
+        return 'LADEN';
     } else if (current < -0.1) {
-        return 'ENTLADEN'; // Negativer Strom = Entladen
+        return 'ENTLADEN';
     } else {
-        return 'RUHE'; // Kein oder sehr geringer Strom
+        return 'RUHE';
     }
 }
 
-// Bestimme welche SOC-Kurve verwendet werden soll
+// Bestimme passende Spannungskurve
 function getVoltageCurve(current) {
     const state = getBatteryState(current);
-    
-    switch(state) {
-        case 'LADEN':
-            return chargingVoltageCurve; // Positiver Strom (Laden)
-        case 'ENTLADEN':
-            return dischargingVoltageCurve; // Negativer Strom (Entladen)
-        case 'RUHE':
-        default:
-            return restingVoltageCurve; // Ruhespannung
+    switch (state) {
+        case 'LADEN': return chargingVoltageCurve;
+        case 'ENTLADEN': return dischargingVoltageCurve;
+        default: return restingVoltageCurve;
     }
 }
 
 // Prüfen und anlegen der Datenpunkte
 function initializeStates() {
     if (!existsState(socDP)) {
-        createState(socDP, 50, { 
-            type: 'number', 
-            name: 'SOC Redodo Batterie', 
-            unit: '%', 
-            read: true, 
-            write: true 
-        });
+        createState(socDP, 50, { type: 'number', name: 'SOC Redodo Batterie', unit: '%', read: true, write: true });
     }
-    
     if (!existsState(lastUpdateDP)) {
-        createState(lastUpdateDP, Date.now(), { 
-            type: 'number', 
-            name: 'Letzte SOC Update Zeit', 
-            read: true, 
-            write: true 
-        });
+        createState(lastUpdateDP, Date.now(), { type: 'number', name: 'Letzte SOC Update Zeit', read: true, write: true });
     }
 }
 
 // Hauptfunktion
 function updateSOC() {
     try {
-        // Daten lesen
         const voltageState = getState(voltageDP);
-        const powerState = getState(powerDP); // Neuen Datenpunkt lesen
+        const powerState = getState(powerDP);
         const lastSOCState = getState(socDP);
         const lastUpdateState = getState(lastUpdateDP);
         
-        // Validierung
-        if (!voltageState || voltageState.val === null || voltageState.val === undefined) {
-            console.log('SOC Update: Keine Spannungsdaten verfügbar');
-            return;
-        }
-        
-        if (!powerState || powerState.val === null || powerState.val === undefined) {
-            console.log('SOC Update: Keine Leistungsdaten verfügbar');
-            return;
-        }
+        if (!voltageState || voltageState.val === null) return;
+        if (!powerState || powerState.val === null) return;
         
         const voltage = parseFloat(voltageState.val);
         const power = parseFloat(powerState.val);
+        if (isNaN(voltage) || isNaN(power)) return;
         
-        if (isNaN(voltage) || isNaN(power)) {
-            console.log('SOC Update: Ungültige Spannungs- oder Leistungsdaten');
-            return;
-        }
-        
-        // Leistung in Strom (Ampere) umrechnen: I = P / U
-        const current = power / voltage;
-        
+        const current = power / voltage; // I = P / U
         const currentSOC = lastSOCState ? parseFloat(lastSOCState.val) : 50;
         const lastUpdate = lastUpdateState ? lastUpdateState.val : Date.now();
         
-        // Zeit seit letztem Update berechnen
         const now = Date.now();
         const deltaTimeHours = (now - lastUpdate) / (1000 * 60 * 60);
         
-        // Bestimme Betriebszustand
         const batteryState = getBatteryState(current);
-        
-        // SOC berechnen basierend auf Betriebszustand
         let newSOC;
         
         if (batteryState === 'RUHE') {
-            // Ruhespannung - verwende primär spannungsbasierte Berechnung
             const curve = getVoltageCurve(current);
             newSOC = interpolateSOC(voltage, curve);
-            console.log(`SOC Update: ${batteryState} - Spannung: ${voltage}V, SOC: ${newSOC}%`);
-            
-        } else if (batteryState === 'LADEN') {
-            // Laden (positiver Strom) - kombiniere beide Methoden
+        } else {
             let socFromCoulomb = updateSOCWithCoulombCounting(currentSOC, current, deltaTimeHours);
             const curve = getVoltageCurve(current);
             let socFromVoltage = interpolateSOC(voltage, curve);
             
-            if (socFromVoltage !== null) {
-                // Beim Laden mehr Gewicht auf Coulomb Counting
-                newSOC = Math.round(socFromCoulomb * 0.7 + socFromVoltage * 0.3);
+            if (batteryState === 'LADEN') {
+                newSOC = socFromVoltage !== null
+                    ? Math.round(socFromCoulomb * 0.7 + socFromVoltage * 0.3)
+                    : Math.round(socFromCoulomb);
             } else {
-                newSOC = Math.round(socFromCoulomb);
+                newSOC = socFromVoltage !== null
+                    ? Math.round(socFromCoulomb * 0.6 + socFromVoltage * 0.4)
+                    : Math.round(socFromCoulomb);
             }
-            
-            console.log(`SOC Update: ${batteryState} (+${current.toFixed(2)}A) - Spannung: ${voltage}V, SOC: ${newSOC}% (Coulomb: ${Math.round(socFromCoulomb)}%, Spannung: ${socFromVoltage}%)`);
-            
-        } else if (batteryState === 'ENTLADEN') {
-            // Entladen (negativer Strom) - kombiniere beide Methoden
-            let socFromCoulomb = updateSOCWithCoulombCounting(currentSOC, current, deltaTimeHours);
-            const curve = getVoltageCurve(current);
-            let socFromVoltage = interpolateSOC(voltage, curve);
-            
-            if (socFromVoltage !== null) {
-                // Beim Entladen ausgeglichene Gewichtung
-                newSOC = Math.round(socFromCoulomb * 0.6 + socFromVoltage * 0.4);
-            } else {
-                newSOC = Math.round(socFromCoulomb);
-            }
-            
-            console.log(`SOC Update: ${batteryState} (${current.toFixed(2)}A) - Spannung: ${voltage}V, SOC: ${newSOC}% (Coulomb: ${Math.round(socFromCoulomb)}%, Spannung: ${socFromVoltage}%)`);
         }
         
-        // SOC begrenzen und speichern
         if (newSOC !== null) {
             newSOC = Math.max(0, Math.min(100, newSOC));
             setState(socDP, newSOC);
             setState(lastUpdateDP, now);
+            console.log(`SOC Update: ${newSOC}% (${batteryState}, Spannung: ${voltage}V, Strom: ${current.toFixed(2)}A)`);
         }
         
     } catch (error) {
@@ -223,9 +169,7 @@ initializeStates();
 // Initialer Aufruf
 updateSOC();
 
-// Besserer Ansatz: Auf Änderungen der relevanten Datenpunkte reagieren
-on({ id: voltageDP, change: 'any' }, updateSOC);
-on({ id: powerDP, change: 'any' }, updateSOC);
+// Alle 60 Sekunden Update starten
+setInterval(updateSOC, interval);
 
-console.log('Verbessertes SOC-Überwachungsskript für Victron System gestartet');
-console.log('Datenpunkte: Spannung=' + voltageDP + ', Leistung=' + powerDP);
+console.log('SOC-Überwachung startet mit 1-Minuten-Intervall');

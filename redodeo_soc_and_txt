@@ -5,20 +5,20 @@ const interval = 5 * 60 * 1000;
 const socDP = '0_userdata.0.solar.redodo_soc';
 const socTextDP = '0_userdata.0.solar.Redodeo.soc_schwelwert.soc_text'; // Datenpunkt im Ordner
 
-// Vereinfachte Spannung-SOC Kurve (LiFePO4, Ruhespannung)
+// LiFePO4 Spannung-SOC Kurve (12V Batterie, Ruhespannung)
 const socCurve = [
-    { voltage: 14.4, soc: 100 },
-    { voltage: 13.6, soc: 95 },
-    { voltage: 13.4, soc: 90 },
-    { voltage: 13.3, soc: 80 },
-    { voltage: 13.2, soc: 70 },
-    { voltage: 13.1, soc: 60 },
-    { voltage: 13.0, soc: 50 },
-    { voltage: 12.9, soc: 40 },
+    { voltage: 14.6, soc: 100 },
+    { voltage: 14.2, soc: 95 },
+    { voltage: 14.0, soc: 90 },
+    { voltage: 13.8, soc: 80 },
+    { voltage: 13.6, soc: 70 },
+    { voltage: 13.4, soc: 60 },
+    { voltage: 13.2, soc: 50 },
+    { voltage: 13.0, soc: 40 },
     { voltage: 12.8, soc: 30 },
     { voltage: 12.6, soc: 20 },
-    { voltage: 12.3, soc: 10 },
-    { voltage: 10.0, soc: 0 }
+    { voltage: 12.4, soc: 10 },
+    { voltage: 12.0, soc: 0 }
 ];
 
 // Interpolationsfunktion

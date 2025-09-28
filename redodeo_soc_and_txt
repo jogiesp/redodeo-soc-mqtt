@@ -1,0 +1,84 @@
+// Intervall in Millisekunden (5 Minuten)
+const interval = 5 * 60 * 1000;
+
+// Datenpunkte
+const socDP = '0_userdata.0.solar.redodo_soc';
+const socTextDP = '0_userdata.0.solar.Redodeo.soc_schwelwert.soc_text'; // Datenpunkt im Ordner
+
+// Vereinfachte Spannung-SOC Kurve (LiFePO4, Ruhespannung)
+const socCurve = [
+    { voltage: 14.4, soc: 100 },
+    { voltage: 13.6, soc: 95 },
+    { voltage: 13.4, soc: 90 },
+    { voltage: 13.3, soc: 80 },
+    { voltage: 13.2, soc: 70 },
+    { voltage: 13.1, soc: 60 },
+    { voltage: 13.0, soc: 50 },
+    { voltage: 12.9, soc: 40 },
+    { voltage: 12.8, soc: 30 },
+    { voltage: 12.6, soc: 20 },
+    { voltage: 12.3, soc: 10 },
+    { voltage: 10.0, soc: 0 }
+];
+
+// Interpolationsfunktion
+function interpolateSOC(voltage) {
+    if (voltage >= socCurve[0].voltage) return 100;
+    if (voltage <= socCurve[socCurve.length - 1].voltage) return 0;
+
+    for (let i = 0; i < socCurve.length - 1; i++) {
+        const high = socCurve[i];
+        const low = socCurve[i + 1];
+        if (voltage <= high.voltage && voltage >= low.voltage) {
+            return Math.round(low.soc + (high.soc - low.soc) * (voltage - low.voltage) / (high.voltage - low.voltage));
+        }
+    }
+    return 0;
+}
+
+// Text-Ausgabe abhängig von SOC
+function socToText(soc) {
+    if (soc >= 90) return "Voll";
+    if (soc >= 70) return "Hoch";
+    if (soc >= 40) return "Mittel";
+    if (soc >= 20) return "Niedrig";
+    return "Leer";
+}
+
+// Prüfen und anlegen der Datenpunkte
+if (!existsState(socDP)) {
+    createState(socDP, 0, { type: 'number', name: 'SOC Redodo Batterie', unit: '%', read: true, write: true });
+}
+if (!existsState(socTextDP)) {
+    createState(socTextDP, "Unbekannt", { type: 'string', name: 'SOC Text', read: true, write: true });
+}
+
+// Variable, um vorherigen Textwert zu speichern
+let lastSocText = getState(socTextDP)?.val || "Unbekannt";
+
+// Hauptfunktion
+function updateSOC() {
+    const voltageState = getState('0_userdata.0.solar.redodeo_single_volt');
+    let socText = "Unbekannt";
+
+    if (voltageState && voltageState.val !== null && voltageState.val !== undefined) {
+        const voltage = parseFloat(voltageState.val);
+        if (!isNaN(voltage)) {
+            const soc = interpolateSOC(voltage);
+            setState(socDP, soc);
+            socText = socToText(soc);
+        }
+    }
+
+    // Nur schreiben, wenn sich der Text geändert hat
+    if (socText !== lastSocText) {
+        setState(socTextDP, socText);
+        lastSocText = socText;
+    }
+}
+
+// Initialer Aufruf
+updateSOC();
+
+// Timer setzen, alle 5 Minuten erneut ausführen
+setInterval(updateSOC, interval);

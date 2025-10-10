@@ -1,4 +1,4 @@
-# Redodeo SOC Script
+# Redodeo SOC Script  Experimentell, vor einer Beta
 
 Dieses Projekt berechnet den State of Charge (SOC) einer Redodeo 12V LiFePO4 Batterie basierend auf der Spannung, die über den Datenpunkt `0_userdata.0.solar.redodeo_single_volt` ausgelesen wird. Der berechnete SOC wird dann in `0_userdata.0.solar.redodeo_soc` gespeichert.
 
